@@ -13,16 +13,33 @@
     </header>
 
     <main>
-      <!-- 首页 -->
+      <!-- 首页：模式选择 -->
       <section id="home-screen" class="screen active">
         <div class="card">
           <h2>欢迎来到灵智答题</h2>
-          <p>一次挑战 6 题：逻辑 / 综合 / 邪门 各 2 题，全对有小奖励。</p>
-          <p><strong>规则：</strong>答对才能进入下一题，全对请截图最后页面给开发者。</p>
+          <p>选择一个模式开始挑战，全对有小奖励。</p>
           <p class="small">
-            当前题库：<span id="question-count">0</span> 题
+            当前题库：<span id="question-count">0</span> 题（全部由开发者亲手出题）
           </p>
-          <button id="start-btn" class="btn primary">开始挑战</button>
+
+          <div class="mode-buttons">
+            <button class="btn primary mode-btn" data-mode="normal">
+              正常挑战（2 综合 + 2 逻辑 + 2 邪门）
+            </button>
+            <button class="btn secondary mode-btn" data-mode="weird">
+              邪门修罗场（随机 6 道邪门题）
+            </button>
+            <button class="btn secondary mode-btn" data-mode="poem">
+              诗词文学局（随机 6 道诗词题）
+            </button>
+          </div>
+
+          <p class="tiny">
+            规则：<br />
+            1）只能输入文字作答，答对才能进入下一题。<br />
+            2）答错会弹出嘲讽弹窗，脑容量 -1。脑容量为 0 时挑战结束。<br />
+            3）通关请截图最后页面发给开发者，奖励 10 元。<br />
+          </p>
         </div>
       </section>
 
@@ -31,6 +48,8 @@
         <div class="card">
           <h2 id="question-title">题目</h2>
           <p id="question-text" class="question-text"></p>
+
+          <p id="brain-hp" class="brain-hp"></p>
 
           <label class="input-label" for="answer-input">
             在这里输入你的答案：
@@ -55,7 +74,7 @@
           <h2>恭喜通关！</h2>
           <p>你已经连续答对本次挑战的全部题目。</p>
           <p><strong>请截图本页面发给开发者，奖励 10 元！</strong></p>
-          <p class="small">欢迎继续挑战下一轮，题目会重新随机组合（依然 2+2+2）。</p>
+          <p class="small">提示：可以换个模式继续。</p>
           <button id="restart-btn" class="btn secondary">
             返回首页，重新挑战
           </button>
@@ -80,4 +99,3 @@
   <script src="script.js"></script>
 </body>
 </html>
-
