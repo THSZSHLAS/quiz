@@ -1,17 +1,35 @@
-// 你的嘲讽语句（原样）
-const TAUNTS = [
+// 嘲讽升级系统
+const TAUNTS_LIGHT = [
+  "再想想？",
+  "就当热身了",
+];
+
+const TAUNTS_MEDIUM = [
   "就这？",
   "建议转人工",
-  "手机放转转回收了吧",
   "嘻嘻",
   "开了吗？我说灵智",
+];
+
+const TAUNTS_HEAVY = [
+  "手机放转转回收了吧",
   "菜就多练",
   "建议外接义脑",
   "？",
+  "啊？？？？？",
+  "这脑容量堪忧",
+  "连 AI 都沉默了",
+  "建议卸载大脑重装系统",
+  "你这是物理降智",
 ];
 
 let currentQuizQuestions = [];
 let currentIndex = 0;
+let currentMode = "normal"; // normal / weird / poem
+
+let wrongCount = 0;
+const MAX_HP = 5;
+let brainHP = MAX_HP;
 
 // 标准化答案：去空格、标点、小写
 function normalizeAnswer(str) {
@@ -33,7 +51,7 @@ function isCorrectAnswer(question, userInput) {
   );
 }
 
-// 打乱数组
+// 随机打乱数组
 function shuffle(array) {
   const arr = array.slice();
   for (let i = arr.length - 1; i > 0; i--) {
@@ -50,16 +68,35 @@ function pickRandomQuestions(sourceArray, count) {
   return shuffled.slice(0, Math.min(count, shuffled.length));
 }
 
-// 底部随机图片（每次“页面变化”都更新）
+// 随机底部图片
 function updateBottomImage() {
   const img = document.getElementById("bottom-image");
   if (!img) return;
-  const picCount = 5; // 你有多少张图就写多少
+  const picCount = 5; // 你有几张图就改成多少
   const index = Math.floor(Math.random() * picCount) + 1;
   img.src = `pic${index}.png`;
 }
 
-// 切换 screen（首页 / 答题 / 结果）
+// 嘲讽分级选择
+function getTaunt() {
+  if (wrongCount < 3) {
+    return TAUNTS_LIGHT[Math.floor(Math.random() * TAUNTS_LIGHT.length)];
+  } else if (wrongCount < 7) {
+    return TAUNTS_MEDIUM[Math.floor(Math.random() * TAUNTS_MEDIUM.length)];
+  } else {
+    return TAUNTS_HEAVY[Math.floor(Math.random() * TAUNTS_HEAVY.length)];
+  }
+}
+
+// 更新脑容量显示
+function updateBrainUI() {
+  const el = document.getElementById("brain-hp");
+  if (!el) return;
+  const hearts = "❤".repeat(brainHP) + "♡".repeat(MAX_HP - brainHP);
+  el.textContent = `脑容量：${hearts} （${brainHP} / ${MAX_HP}）`;
+}
+
+// 切换页面
 function switchScreen(screen) {
   const home = document.getElementById("home-screen");
   const quiz = document.getElementById("quiz-screen");
@@ -80,15 +117,29 @@ function switchScreen(screen) {
   updateBottomImage();
 }
 
-// 开始一轮挑战：综合 2 + 逻辑 2 + 邪门 2
+// 开始一轮挑战：根据模式配题
 function startQuiz() {
   currentIndex = 0;
+  wrongCount = 0;
+  brainHP = MAX_HP;
 
-  const comp = pickRandomQuestions(window.quizData.comprehensive, 2);
-  const logic = pickRandomQuestions(window.quizData.logic, 2);
-  const weird = pickRandomQuestions(window.quizData.weird, 2);
+  let selected = [];
 
-  currentQuizQuestions = shuffle([...comp, ...logic, ...weird]);
+  if (currentMode === "normal") {
+    const comp = pickRandomQuestions(window.quizData.comprehensive, 2);
+    const logic = pickRandomQuestions(window.quizData.logic, 2);
+    const weird = pickRandomQuestions(window.quizData.weird, 2);
+    selected = [...comp, ...logic, ...weird];
+  } else if (currentMode === "weird") {
+    selected = pickRandomQuestions(window.quizData.weird, 6);
+  } else if (currentMode === "poem") {
+    const poemQuestions = window.quizData.comprehensive.filter(
+      (q) => q.isPoem === true
+    );
+    selected = pickRandomQuestions(poemQuestions, 6);
+  }
+
+  currentQuizQuestions = shuffle(selected);
 
   switchScreen("quiz");
   renderQuestion();
@@ -112,7 +163,7 @@ function renderQuestion() {
   feedback.classList.remove("feedback-correct", "feedback-wrong");
   questionInput.focus();
 
-  // 每换一道题，也换一张底部图片
+  updateBrainUI();
   updateBottomImage();
 }
 
@@ -123,6 +174,14 @@ function handleSubmit() {
   const userInput = questionInput.value;
   const currentQuestion = currentQuizQuestions[currentIndex];
 
+  // 隐藏彩蛋：开发者最帅 → 直接通关
+  if (normalizeAnswer(userInput) === normalizeAnswer("开发者最帅")) {
+    alert("识货的人，直接毕业。");
+    showResultScreen();
+    return;
+  }
+
+  // 正常判断
   if (isCorrectAnswer(currentQuestion, userInput)) {
     feedback.textContent = "答对了！自动进入下一题～";
     feedback.classList.remove("feedback-wrong");
@@ -137,10 +196,22 @@ function handleSubmit() {
       }
     }, 600);
   } else {
-    const taunt = TAUNTS[Math.floor(Math.random() * TAUNTS.length)];
-    feedback.textContent = taunt;
+    wrongCount++;
+    brainHP = Math.max(0, brainHP - 1);
+    updateBrainUI();
+
+    const taunt = getTaunt();
+    // 嘲讽弹窗，必须点确定才能继续
+    alert(taunt);
+
+    feedback.textContent = "回答错误。";
     feedback.classList.remove("feedback-correct");
     feedback.classList.add("feedback-wrong");
+
+    if (brainHP <= 0) {
+      alert("脑容量告罄，请重启大脑。");
+      restartQuiz();
+    }
   }
 }
 
@@ -173,7 +244,7 @@ function startFlowerRain() {
 
 // 初始化
 document.addEventListener("DOMContentLoaded", () => {
-  // 显示题库总数（综合 + 逻辑 + 邪门）
+  // 显示题库总数
   const totalCount =
     window.quizData.comprehensive.length +
     window.quizData.logic.length +
@@ -183,12 +254,27 @@ document.addEventListener("DOMContentLoaded", () => {
     counterSpan.textContent = totalCount;
   }
 
+  // 模式按钮
+  document.querySelectorAll(".mode-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      currentMode = btn.dataset.mode || "normal";
+      startQuiz();
+    });
+  });
+
+  // 提交按钮
+  document.getElementById("submit-btn").addEventListener("click", handleSubmit);
+
+  // 回车键提交
   document
-    .getElementById("start-btn")
-    .addEventListener("click", startQuiz);
-  document
-    .getElementById("submit-btn")
-    .addEventListener("click", handleSubmit);
+    .getElementById("answer-input")
+    .addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        handleSubmit();
+      }
+    });
+
+  // 重开按钮
   document
     .getElementById("restart-btn")
     .addEventListener("click", restartQuiz);
