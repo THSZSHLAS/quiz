@@ -28,7 +28,7 @@ let currentIndex = 0;
 let currentMode = "normal"; // normal / weird / poem
 
 let wrongCount = 0;
-const MAX_HP = 5;
+const MAX_HP = 7;
 let brainHP = MAX_HP;
 
 // 标准化答案：去空格、标点、小写
@@ -281,3 +281,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
   switchScreen("home");
 });
+
